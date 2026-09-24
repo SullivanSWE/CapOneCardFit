@@ -1,0 +1,36 @@
+services:
+  database:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: cardfit
+      POSTGRES_USER: cardfit
+      POSTGRES_PASSWORD: cardfit_local
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cardfit -d cardfit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/cardfit
+      SPRING_DATASOURCE_USERNAME: cardfit
+      SPRING_DATASOURCE_PASSWORD: cardfit_local
+    depends_on:
+      database:
+        condition: service_healthy
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      - backend
+volumes:
+  postgres_data:
